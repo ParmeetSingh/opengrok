@@ -1,0 +1,91 @@
+Checklist for releasing OpenGrok:
+---------------------------------
+
+../ext_lib - is a directory where we keep latest JFlex.jar and all necessary
+jars/dirs for tests
+
+0) set proper version in build.xml
+
+   <property name="version" value="???"/>
+
+   and put some stuff into CHANGES.txt
+
+   Then commit the change:
+
+     git commit
+
+1) build must be clean
+
+   ant clean
+   ant # defaults to jar currently
+   ant package
+
+2) check all tests, tests code coverage:
+   junit, pmd, findbugs, checkstyle, emma, jdepend
+
+They should be ok, currently only checkstyle has 8 warnings, the rest is
+clean; emma reports should be based according to what is set for the release,
+usually it's overall coverage above 80%)
+
+(jenkins can help here, see README.txt on setup)
+
+The release is OK, once above is fullfilled to our satisfaction.
+
+3) tag the build used for release so we can get back to it:
+
+   git tag 0.XYZ
+   git push origin --tags
+
+4) produce proper distributions
+
+Check them before upload, always try to build on Solaris, since gnu tar might
+create a non-standard compliant .tgz version and tag from step 0) will be used
+to produce the archive
+
+  ant dist
+  ant package
+
+The command above creates both formats of package .pkg and .p5p into the directory dist
+
+
+Note that for the IPS package *.p5p the version names are translated this way:
+
+0.12          ~       0.12.0.1.0
+0.<n>         ~       0.<n>.0.1.0
+...
+
+0.12-rc1      ~       0.12.0.0.1
+0.12-rc<i>    ~       0.12.0.0.<i>
+...
+
+(Note that the release candidate must follow imediately after the basic version
+number (0.12))
+
+
+0.12.1        ~       0.12.1.0.0
+0.12.<j>      ~       0.12.<j>.0.0
+...
+
+0.12.0.1      ~       0.12.0.1.1
+0.12.0.<k>    ~       0.12.0.1.<k>
+...
+
+5) Upload them using https://github.com/OpenGrok/OpenGrok/releases
+
+   Note that the files has to be stored in a ZIP file for github to accept
+   them so use incantation like follows:
+
+     echo opengrok-0.13-rc1.tar.gz | zip -0 -@ opengrok-0.13-rc1.zip
+
+   Uploading from behing a proxy does not work so it is recommended to use
+   direct internet connection.
+
+   Also generate cryptographic digests for all the binaries,
+   e.g. using openssl:
+
+     openssl dgst -sha256 <file1> <file2> ..
+
+   and paste them next to the uploaded files.
+
+   Note that the files with packages have to be gzipped otherwise github
+   upload does not allow them.
